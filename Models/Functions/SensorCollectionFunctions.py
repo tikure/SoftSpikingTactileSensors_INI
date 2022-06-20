@@ -59,6 +59,7 @@ def read_sensor(s_sensor):
 
 
 def setpos(X,Y,Z,s_printer):
+    feedrate = "1600"
     """Sets position of 3d printer via serial (Marlin)"""
     line = "G0 "+ " X"+str(X)+" Y"+str(Y)+ " Z"+str(Z)+  " F" + str(feedrate)+"\n"
     s_printer.write(line.encode()) # Send g-code block to grbl
@@ -86,8 +87,8 @@ def initialize_printer(s_printer):
     s_printer.write("G90\n".encode())
 
     # setpos(x_def, y_def, z_def)
-    print(read_printer())
+    print(read_printer(s_printer))
     print('Sending: ' + "G92")
     s_printer.write("G92 X0 Y0 Z0\n".encode())
-    print(read_printer())
+    print(read_printer(s_printer))
     time.sleep(3)

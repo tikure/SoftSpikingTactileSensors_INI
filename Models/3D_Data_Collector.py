@@ -9,21 +9,21 @@ sys.path.append("./Functions")
 
 from SensorCollectionFunctions import *
 
-filename = "_real_piezo2"
+filename = "_AFG_test"
 z_offset = 2
 s_sensor = serial.Serial(port="COM5", baudrate=115200, bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
 s_printer = serial.Serial(port="COM4", baudrate=250000)
-# s_AFG = serial.Serial(port = "COM10", baudrate=115200,bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
-s_piezo = serial.Serial(port="COM3", baudrate=9600)
+s_Force = serial.Serial(port = "COM7", baudrate=115200,bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
+#s_piezo = serial.Serial(port="COM3", baudrate=9600)
 
 feedrate = "1600"
 initialize_printer(s_printer)
-time.sleep(10)
+time.sleep(1)
 print("Move Printer Check: New Pos = 10/10/0")
 setpos(10, 10, 0, s_printer)
 b20 = read_sensor(s_sensor)
 pos = read_printer(s_printer)
-F = read_force(s_piezo)
+F = read_force(s_Force)
 print("Read Printer Check: ", pos)
 print("Read AFG Check: ", F)
 print("Read Sensor Check: ", b20)
@@ -42,11 +42,11 @@ forces = []
 
 for z in z_depths:
     setpos(10, 10, -z, s_printer)
-    forces.append(read_force(s_piezo))
+    forces.append(read_force(s_Force))
     # print(read_printer(s_printer))
 
 setpos(10, 10, 0, s_printer)
-setpos(0,0,0,s_printer)
+setpos(0,0,0, s_printer)
 plt.vlines(x=z_offset,ymin = 0, ymax = max(forces)+1,colors="r")
 plt.plot(z_depths, forces)
 plt.title("Force Sensor Calibration")
@@ -60,7 +60,7 @@ norm_data = []
 setpos(0, 0, 0, s_printer)  # Return to origin, not touching pad
 time.sleep(1)
 print("Collecting Normalization Data")
-norm_count = 10000
+norm_count = 100
 for i in range(int(norm_count/2)):
     b20 = read_sensor(s_sensor)
     if i % 5000 == 0:
@@ -71,18 +71,18 @@ for i in range(int(norm_count/2)):
 
 """Avoid corners with screws"""
 notest = []
-for i in (0, 1, 7, 8):
-    for q in (0, 1, 7, 8):
+for i in (1,9):
+    for q in (1,9):
         notest.append([i, q])
 notest.append([0, 5, 3])
-notest = []
+#notest = []
 
 truths = []
 sensor_data = []
 setpos(0, 0, 0, s_printer)
 
 """Collect Data"""
-iterations = 100
+iterations = 1
 # print(f"Estimated time to completion: {round(170*iterations/60,0)}min")
 grid_x = 9  # Steps for sampling + 1 due to indexing
 grid_y = 9  # = grid_x, normally
@@ -110,25 +110,26 @@ for iteration in range(1, iterations + 1):
                     b20 = read_sensor(s_sensor)
                     sensor_data.append(b20)
 
-                    force_N = read_force(s_piezo)
-                    if force_N == 0:  # If not touching sensor we define as 10/10/0 - can be changed later
+                    force_N = read_force(s_Force)
+                    if force_N < 0.04:  # If not touching sensor we define as 10/10/0 - can be changed later
                         truths.append([10, 10, force_N])
                     else:
                         truths.append([g_x_mm, g_y_mm, force_N])
                         # print([g_x_mm, g_y_mm, force_N])
+                    #print("x_mm,y_mm:", g_x_mm, g_y_mm, z_mm, force_N)
             else:  # At corners we just take normalization data
                 b20 = read_sensor(s_sensor)
                 sensor_data.append(b20)
                 truths.append([g_x_mm, g_y_mm, 0])
             setpos(g_x_mm, g_y_mm, 0, s_printer)  # Move above sensor again
-            #print("x_mm,y_mm,x,y:", g_x_mm, g_y_mm, g_x, g_y)
-    if iteration % 20 == 0:
+
+    if iteration % 1 == 0:
         print(f"Iterations: {iteration}/{iterations}")
         time_for_iteration = round(time.time() - time_start, 1) - time_for_iteration
     if iteration == 1:
         print("Time for Iteration: ", time_for_iteration)
-        now = datetime.datetime.now()
-        print(now.hour, now.minute)
+        #now = datetime.datetime.now()
+        #print(now.hour, now.minute)
         print(f"Expected time until completion: {round(time_for_iteration * (iterations - iteration) / 60, 0)}min")
         x = [t[0] for t in truths]
         y = [t[1] for t in truths]
@@ -139,7 +140,7 @@ for iteration in range(1, iterations + 1):
         print("Y:",y)
         print("F:",F)
         for i in range(len(x)):
-            plt.plot(x[i],y[i], "o", markersize= F[i]/2, markerfacecolor='none', markeredgecolor="r")
+            plt.plot(x[i],y[i], "o", markersize= F[i]*5, markerfacecolor='none', markeredgecolor="r")
         plt.title("Data Distribution")
         plt.ylim(0,20)
         plt.xlim(0,20)

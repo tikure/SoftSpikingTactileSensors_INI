@@ -135,80 +135,6 @@ def visualize(b15, test_truths):
     plt.legend(loc='upper right', prop={'size': 5})
     plt.show()
 
-def evaluate_MLP1(model,test_dataset, title = ""):
-    print(f"Testing Eval on {len(test_dataset)} testing samples")
-    model.eval()
-    x_diff = []
-    y_diff = []
-    F_diff = []
-    x_corr = 0
-    y_corr = 0
-    F_corr = 0
-    total_corr = 0
-
-    with torch.no_grad():
-        check = len(test_dataset)
-        for i in range(check):
-            label = test_dataset[i][1].numpy()
-            output = model(test_dataset[i][0]).numpy()
-            x_diff.append(abs(label[0] - output[0]))
-            if x_diff[-1] < 1:
-                x_corr += 1
-            y_diff.append(abs(label[1] - output[1]))
-            if y_diff[-1] < 1:
-                y_corr += 1
-            F_diff.append(abs(label[2] - output[2]))
-            if F_diff[-1] < 0.1:
-                F_corr += 1
-            if x_diff[-1] < 1 and y_diff[-1] < 1 and F_diff[-1] < 0.1:
-                total_corr += 1
-    x2 = [x ** 2 for x in x_diff]
-    y2 = [x ** 2 for x in y_diff]
-    F2 = [x ** 2 for x in F_diff]
-    print(" Mean Dist | MSE  | Stdv")
-    print(f"X   {np.mean(x_diff):.2f}mm | {np.mean(x2):.2f} | {np.std(x_diff):.2f}")
-    print(f"Y   {np.mean(y_diff):.2f}mm | {np.mean(y2):.2f} | {np.std(y_diff):.2f}")
-    print(f"F   {np.mean(F_diff):.2f}N  | {np.mean(F2):.2f} | {np.std(F_diff):.2f}")
-    print("-------------------------\n")
-    print(f"X 1mm accuracy: {(x_corr / check) * 100}%")
-    print(f"Y 1mm accuracy: {(y_corr / check) * 100}%")
-    print(f"F 0.1N accuracy: {(F_corr / check) * 100}%")
-    print(f"Complete accuracy {total_corr / check * 100}%")
-    plt.boxplot([x_diff, y_diff, F_diff])
-    plt.xticks([1, 2, 3], ["X", "Y", "Z"])
-    plt.title(title + "Boxplot of distance to Reality")
-    plt.show()
-
-    """Plot Distances"""
-    colors = ["r", "g", "b", "y", "m"]
-    fin = 0
-
-    while fin < 5:
-        i = np.random.randint(0,500,1)[0]
-        label = test_dataset[i][1].numpy()
-        output = model(test_dataset[i][0]).detach().numpy()
-
-        if label[2] != 0:
-            print(f" Plotted: Output: {output}, Label: {label}")
-            plt.plot(label[0], label[1], "x", markersize=(label[2]*10) * 1.2,
-                     label=str(label[2]) + "N == " + str(output[2]) + "N", color=colors[fin])
-            plt.plot(output[0], output[1], "o", markersize=output[2]*10, color=colors[fin])
-            fin += 1
-    fin = 0
-    while fin < 5:
-        i += 1
-        label = test_dataset[i][1].numpy()
-        output = model(test_dataset[i][0]).detach().numpy()
-        if label[2] == 0:
-            print(f" 0N: Output: {output}, Label: {label}")
-            fin += 1
-
-    plt.xlim(0, 20)
-    plt.ylim(0, 20)
-    plt.legend(prop={'size': 8})
-    plt.title(title+" model accuracy")
-    plt.show()
-
 def evaluate_MLP(model,test_dataset, title = ""):
     print(f"Testing Eval on {len(test_dataset)} testing samples")
     model.eval()
@@ -253,7 +179,7 @@ def evaluate_MLP(model,test_dataset, title = ""):
         if label[2] != 0:
             print(f" Plotted: Output: {output}, Label: {label}")
             acc.plot(label[0], label[1], "x", label=str(label[2]) + "N == " + str(output[2]) + "N",
-                     markersize=(label[2]*10) * 1.2, color=colors[fin])
+                     markersize=(label[2]) * 12, color=colors[fin])
             acc.plot(output[0], output[1], "o",
                      markersize=output[2]*10, markerfacecolor='none', markeredgecolor=colors[fin])
             fin += 1
@@ -278,7 +204,7 @@ def evaluate_MLP(model,test_dataset, title = ""):
 
 
     diff.boxplot([x_diff, y_diff, F_diff])
-    diff.set_xticks([1, 2, 3], ["X", "Y", "Z"])
+    #diff.set_xticks([1, 2, 3], ["X", "Y", "Z"])
     diff.set_title(title + " Boxplot of distance to Reality")
 
     acc.set_xlim(0, 20)

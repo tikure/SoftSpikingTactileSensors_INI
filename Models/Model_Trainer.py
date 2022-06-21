@@ -9,9 +9,9 @@ from Data_functions import *
 from Model_functions import *
 
 """Import Training Data"""""
-filenames = ["_100", "_100_2"]
-model_name = "Train_Trial"
-b15, truths, test_truths, norm_val = import_data(filenames, max_N=3, shape="random")
+filenames = ["_AFG_test"]
+model_name = "_AFG_test"
+b15, truths, test_truths, norm_val = import_data(filenames, max_N=100, shape="random")
 # list of filenames, outlier cutoff, fill value for 0 N or "random" (default)
 np.savetxt("./Data/norm_val_"+model_name + ".txt", norm_val)
 # TODO implement normalized variation
@@ -62,6 +62,7 @@ previous_loss = 1
 losses = []
 overfitting = 0
 print("\n")
+
 if True:
     evaluate_MLP(model, test_dataset,title="Before training")
     print("Beginning Training")
@@ -78,9 +79,17 @@ if True:
             optimizer.step()
             train_loss += loss.item()
         epoch_loss = round(train_loss / len(train_dataset), 5)
+
         if epoch % 20 == 0:
             print(f'Epoch [{epoch + 1}], Step [{i + 1}/{n_total_steps}], Loss: {epoch_loss}')
             evaluate_MLP(model, test_dataset,title="Training Epoch:"+str(epoch))
+            out = [b[2] for b in outputs]
+            if sum(out) < 1:
+                print("Restarting Model")
+                optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+                model = vanilla_model(15, feature_dim=40, feat_hidden=[200, 200], activation_fn=nn.ReLU,
+                                      output_hidden=[200, 200],
+                                      output_activation=nn.ReLU, feat_activation=None)
         delta_loss = previous_loss - epoch_loss
         if delta_loss < 0.01 * epoch_loss + 0.0001:
             overfitting += 1

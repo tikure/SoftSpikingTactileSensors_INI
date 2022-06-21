@@ -9,7 +9,7 @@ sys.path.append("./Functions")
 
 from SensorCollectionFunctions import *
 
-filename = "_AFG_test"
+filename = "_AFG_test150"
 z_offset = 2
 s_sensor = serial.Serial(port="COM5", baudrate=115200, bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
 s_printer = serial.Serial(port="COM4", baudrate=250000)
@@ -68,6 +68,7 @@ for i in range(int(norm_count/2)):
         print("B20 Read")
         print(b20)
     norm_data.append(b20)
+np.savetxt("./Data/norm_b20_artillery" + filename + ".txt", norm_data, fmt="%s")
 
 """Avoid corners with screws"""
 notest = []
@@ -126,6 +127,9 @@ for iteration in range(1, iterations + 1):
     if iteration % 1 == 0:
         print(f"Iterations: {iteration}/{iterations}")
         time_for_iteration = round(time.time() - time_start, 1) - time_for_iteration
+        np.savetxt("./Data/b20_artillery" + filename + ".txt", sensor_data, fmt="%s")
+        np.savetxt("./Data/truths_artillery" + filename + ".txt", truths, fmt="%s")
+        print("Data Saved")
     if iteration == 1:
         print("Time for Iteration: ", time_for_iteration)
         #now = datetime.datetime.now()
@@ -148,10 +152,7 @@ for iteration in range(1, iterations + 1):
         plt.xlabel("X [mm]")
         plt.show()
         if iteration % 2 == 0:
-            np.savetxt("./Data/norm_b20_artillery" + filename + str(iteration)+ ".txt", norm_data, fmt="%s")
-            np.savetxt("./Data/b20_artillery" + filename + str(iteration)+ ".txt", sensor_data, fmt="%s")
-            np.savetxt("./Data/truths_artillery" + filename + str(iteration)+ ".txt", truths, fmt="%s")
-            print("Data Saved")
+            print("Why")
 setpos(0, 0, 0, s_printer)
 
 """Collect Normalization after run"""

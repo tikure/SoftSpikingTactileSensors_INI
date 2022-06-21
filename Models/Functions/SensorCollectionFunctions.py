@@ -17,20 +17,20 @@ def read_force(s_AFG):
         force_N2 = s_AFG.readline().decode().strip()
         while force_N == '':  # Incase empty bit arrives
             s_AFG.flushInput()
-            #s_AFG.write(0x3F)  # ? 63 0x3F Transmit the current reading
+            s_AFG.write(0x3F)  # ? 63 0x3F Transmit the current reading
             force_N = s_AFG.readline().decode().strip()
         force_N = round(abs(float(force_N)),3)
         time.sleep(0.01)
         while force_N2 == '':  # Incase empty bit arrives
             s_AFG.flushInput()
-            #s_AFG.write(0x3F)  # ? 63 0x3F Transmit the current reading
+            s_AFG.write(0x3F)  # ? 63 0x3F Transmit the current reading
             force_N2 = s_AFG.readline().decode().strip()
         force_N2 = round(abs(float(force_N2)),3)
         if abs(force_N - force_N2) <= force_N*0.1:
             fin = False
             #print(f"Forces accepted: {force_N}, {force_N2}, {abs(force_N - force_N2)}, {force_N * 0.1}")
-        else:
-            print(f"Forces rejected: {force_N}, {force_N2}, {abs(force_N - force_N2)}, {force_N * 0.1}")
+        #else:
+            #print(f"Forces rejected: {force_N}, {force_N2}, {abs(force_N - force_N2)}, {force_N * 0.1}")
     return force_N
 
 def read_force_OFF(s_piezo):

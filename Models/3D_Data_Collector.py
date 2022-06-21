@@ -60,7 +60,7 @@ norm_data = []
 setpos(0, 0, 0, s_printer)  # Return to origin, not touching pad
 time.sleep(1)
 print("Collecting Normalization Data")
-norm_count = 100
+norm_count = 10000
 for i in range(int(norm_count/2)):
     b20 = read_sensor(s_sensor)
     if i % 5000 == 0:
@@ -82,7 +82,7 @@ sensor_data = []
 setpos(0, 0, 0, s_printer)
 
 """Collect Data"""
-iterations = 1
+iterations = 50
 # print(f"Estimated time to completion: {round(170*iterations/60,0)}min")
 grid_x = 9  # Steps for sampling + 1 due to indexing
 grid_y = 9  # = grid_x, normally
@@ -111,8 +111,8 @@ for iteration in range(1, iterations + 1):
                     sensor_data.append(b20)
 
                     force_N = read_force(s_Force)
-                    if force_N < 0.04:  # If not touching sensor we define as 10/10/0 - can be changed later
-                        truths.append([10, 10, force_N])
+                    if force_N < 0.02:  # If not touching sensor we define as 10/10/0 - can be changed later
+                        truths.append([10, 10, 0])
                     else:
                         truths.append([g_x_mm, g_y_mm, force_N])
                         # print([g_x_mm, g_y_mm, force_N])
@@ -147,6 +147,11 @@ for iteration in range(1, iterations + 1):
         plt.ylabel("Y [mm]")
         plt.xlabel("X [mm]")
         plt.show()
+        if iteration % 2 == 0:
+            np.savetxt("./Data/norm_b20_artillery" + filename + str(iteration)+ ".txt", norm_data, fmt="%s")
+            np.savetxt("./Data/b20_artillery" + filename + str(iteration)+ ".txt", sensor_data, fmt="%s")
+            np.savetxt("./Data/truths_artillery" + filename + str(iteration)+ ".txt", truths, fmt="%s")
+            print("Data Saved")
 setpos(0, 0, 0, s_printer)
 
 """Collect Normalization after run"""

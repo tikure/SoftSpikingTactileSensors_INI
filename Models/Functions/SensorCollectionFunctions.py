@@ -89,6 +89,7 @@ def initialize_printer(s_printer):
     # setpos(x_def, y_def, z_def)
     print(read_printer(s_printer))
     time.sleep(10)
+    setpos(0,0,0,s_printer)
     print('Sending: ' + "G92")
     s_printer.write("G92 X0 Y0 Z0\n".encode())
     print(read_printer(s_printer))

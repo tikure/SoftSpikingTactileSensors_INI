@@ -9,7 +9,7 @@ sys.path.append("./Functions")
 
 from SensorCollectionFunctions import *
 
-filename = "_real_piezo"
+filename = "_real_piezo2"
 z_offset = 2
 s_sensor = serial.Serial(port="COM5", baudrate=115200, bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
 s_printer = serial.Serial(port="COM4", baudrate=250000)
@@ -184,4 +184,4 @@ np.savetxt("./Data/norm_b20_artillery" + filename + ".txt", norm_data, fmt="%s")
 np.savetxt("./Data/b20_artillery" + filename + ".txt", sensor_data, fmt="%s")
 np.savetxt("./Data/truths_artillery" + filename + ".txt", truths, fmt="%s")
 print("Data Saved")
-plt.show()
+#plt.show()

@@ -9,9 +9,9 @@ from Data_functions import *
 from Model_functions import *
 
 """Import Training Data"""""
-filenames = ["_AFG_test200"]
-model_name = "_AFG_test200_bad"
-b15, truths, test_truths, norm_val = import_data(filenames, max_N=100, shape=10,include_norm = False)
+filenames = ["_AFG_test200","_AFG_test150","_AFG_test"]
+model_name = "_AFG_test200"
+b15, truths, test_truths, norm_val = import_data(filenames, max_N=100, shape="random",include_norm = False)
 # list of filenames, outlier cutoff, fill value for 0 N or "random" (default)
 np.savetxt("./Data/norm_val_"+model_name + ".txt", norm_val)
 # TODO implement normalized variation
@@ -64,7 +64,7 @@ losses = []
 overfitting = 0
 print("\n")
 
-if True:
+if False:
     evaluate_MLP(model, test_dataset,title="Before training")
     print("Beginning Training")
     for epoch in range(num_epochs):

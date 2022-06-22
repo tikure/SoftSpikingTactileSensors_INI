@@ -8,11 +8,8 @@ import datetime
 sys.path.append("./Functions")
 
 from SensorCollectionFunctions import *
-from Model_functions import *
 
-s_Force = serial.Serial(port = "COM7", baudrate=115200,bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
-s_sensor = serial.Serial(port="COM5", baudrate=115200, bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
-s_printer = serial.Serial(port="COM4", baudrate=250000)
-
-setpos(10,10,-3, s_printer)
-print(read_force(s_Force))
+s_sensor = serial.Serial(port = "COM14", baudrate=115200,bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
+for i in range(10):
+    print(read_sensor(s_sensor))
+    print(len(read_sensor(s_sensor)))

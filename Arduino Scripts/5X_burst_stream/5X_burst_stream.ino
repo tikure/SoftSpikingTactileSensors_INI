@@ -14,7 +14,7 @@
 #include <Wire.h>
 #include <MLX90393.h> 
 
-#define Serial SERIAL_PORT_USBVIRTUAL
+//#define Serial SERIAL_PORT_USBVIRTUAL
 
 MLX90393 mlx0;
 MLX90393 mlx1;

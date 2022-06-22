@@ -9,8 +9,8 @@ from Data_functions import *
 from Model_functions import *
 
 """Import Training Data"""""
-filenames = ["_AFG_test"]
-model_name = "_AFG_test"
+filenames = ["_AFG_test200"]
+model_name = "_AFG_test200"
 b15, truths, test_truths, norm_val = import_data(filenames, max_N=100, shape="random")
 # list of filenames, outlier cutoff, fill value for 0 N or "random" (default)
 np.savetxt("./Data/norm_val_"+model_name + ".txt", norm_val)

@@ -9,10 +9,10 @@ sys.path.append("./Functions")
 
 from SensorCollectionFunctions import *
 
-filename = "_AFG_test_new_board"
+filename = "_AFG_test_new_board15"
 z_offset = 2
 s_sensor = serial.Serial(port="COM5", baudrate=115200, bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
-s_printer = serial.Serial(port="COM4", baudrate=250000)
+s_printer = serial.Serial(port="COM8", baudrate=250000)
 s_Force = serial.Serial(port = "COM7", baudrate=115200,bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
 #s_piezo = serial.Serial(port="COM3", baudrate=9600)
 
@@ -84,7 +84,7 @@ sensor_data = []
 setpos(0, 0, 0, s_printer)
 
 """Collect Data"""
-iterations = 200
+iterations = 10
 # print(f"Estimated time to completion: {round(170*iterations/60,0)}min")
 grid_x = 9  # Steps for sampling + 1 due to indexing
 grid_y = 9  # = grid_x, normally

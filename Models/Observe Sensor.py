@@ -22,9 +22,10 @@ initialize_printer(s_printer)
 time.sleep(1)
 
 """Load Normalization Values of Model"""
-model_name = "AFG_test400"
-norm_val = np.loadtxt("./Data/norm_val__"+model_name+".txt",dtype = float)
+model_name = "AFG_test200"
+norm_val_og= np.loadtxt("./Data/norm_val__"+model_name+".txt",dtype = float)
 b15_norm = []
+print("Collecting Norm Val")
 for i in range(5000):
     b = read_sensor(s_sensor)
     b15  = np.array(np.concatenate((b[0:3],b[4:7],b[8:11],b[12:15],b[16:19])))
@@ -36,10 +37,14 @@ for i in range(len(b15_norm[0])):
         mean += b[i]
     mean = mean / count
     norm_val.append(mean)
+print("Training Norm Values: ",norm_val_og)
 print(f"Normalization Values: {len(norm_val)},{norm_val}")
 
-print("Normalized Sensor Values: ",read_sensor(s_sensor))#Check if sensor works
-
+b = read_sensor(s_sensor)
+b15  = np.array(np.concatenate((b[0:3],b[4:7],b[8:11],b[12:15],b[16:19])))
+print("Sensor Values: ",b)#Check if sensor works
+print("Normalized Sensor Values: ",b15 /norm_val)#Check if sensor works
+print("Training Norm Sensor Values: ",b15 /norm_val_og)#Check if sensor works
 """Setup Model"""
 model = vanilla_model(15, feature_dim=40, feat_hidden=[200,200], activation_fn=nn.ReLU, output_hidden=[200,200],
                             output_activation=nn.ReLU)

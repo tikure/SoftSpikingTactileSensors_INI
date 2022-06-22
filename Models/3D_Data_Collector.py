@@ -9,7 +9,7 @@ sys.path.append("./Functions")
 
 from SensorCollectionFunctions import *
 
-filename = "_AFG_test200"
+filename = "_AFG_test_new_board"
 z_offset = 2
 s_sensor = serial.Serial(port="COM5", baudrate=115200, bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
 s_printer = serial.Serial(port="COM4", baudrate=250000)

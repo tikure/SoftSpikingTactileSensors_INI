@@ -4,12 +4,12 @@ import time
 import numpy as np
 import sys
 import datetime
-
+#TODO change how files are named
 sys.path.append("./Functions")
 
 from SensorCollectionFunctions import *
 
-filename = "_AFG_test150"
+filename = "_AFG_test200"
 z_offset = 2
 s_sensor = serial.Serial(port="COM5", baudrate=115200, bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
 s_printer = serial.Serial(port="COM4", baudrate=250000)
@@ -17,6 +17,7 @@ s_Force = serial.Serial(port = "COM7", baudrate=115200,bytesize=8, timeout=2, st
 #s_piezo = serial.Serial(port="COM3", baudrate=9600)
 
 feedrate = "1600"
+#setpos(0, 0, 0, s_printer)
 initialize_printer(s_printer)
 time.sleep(1)
 print("Move Printer Check: New Pos = 10/10/0")
@@ -83,7 +84,7 @@ sensor_data = []
 setpos(0, 0, 0, s_printer)
 
 """Collect Data"""
-iterations = 50
+iterations = 200
 # print(f"Estimated time to completion: {round(170*iterations/60,0)}min")
 grid_x = 9  # Steps for sampling + 1 due to indexing
 grid_y = 9  # = grid_x, normally
@@ -191,4 +192,4 @@ np.savetxt("./Data/norm_b20_artillery" + filename + ".txt", norm_data, fmt="%s")
 np.savetxt("./Data/b20_artillery" + filename + ".txt", sensor_data, fmt="%s")
 np.savetxt("./Data/truths_artillery" + filename + ".txt", truths, fmt="%s")
 print("Data Saved")
-#plt.show()
+plt.show()

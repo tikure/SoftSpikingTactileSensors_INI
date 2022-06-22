@@ -6,7 +6,7 @@ import matplotlib.pylab as plt
 import torch
 
 
-def import_data(filenames, max_N=3, shape="random"):
+def import_data(filenames, max_N=3, shape="random" , include_norm = False):
     """Open Files"""
     b20 = []
     for i, filename in enumerate(filenames):
@@ -24,6 +24,14 @@ def import_data(filenames, max_N=3, shape="random"):
         raise Exception("Arrays not of equal length")
 
     """Format Data"""
+
+    if include_norm:
+        print("Beginning Norm")
+        print("len b20:",len(b20))
+        b20 = np.concatenate(b20, b20_norm)
+        truths = np.concatenate(truths, np.full(len(b20_norm), [0,0,0]))
+        print("len b20:", len(b20))
+
     """Setup Data"""
     b15_norm = [np.concatenate((b[0:3], b[4:7], b[8:11], b[12:15], b[16:19])) for b in
                 b20_norm]  # We only care about 1,2,3 (xyz) not 4 (T) per sensor
@@ -39,6 +47,7 @@ def import_data(filenames, max_N=3, shape="random"):
 
     b15 = [b / norm_val for b in b15]
     test_truths = [tr[2] for tr in truths]
+
 
     """Cleanup Data"""
     b15 = [b15[i] for i, t in enumerate(test_truths) if t < max_N]
@@ -150,18 +159,19 @@ def evaluate_MLP(model,test_dataset, title = ""):
         check = len(test_dataset)
         for i in range(check):
             label = test_dataset[i][1].numpy()
-            output = model(test_dataset[i][0]).numpy()
-            x_diff.append(abs(label[0] - output[0]))
-            if x_diff[-1] < 1:
-                x_corr += 1
-            y_diff.append(abs(label[1] - output[1]))
-            if y_diff[-1] < 1:
-                y_corr += 1
-            F_diff.append(abs(label[2] - output[2]))
-            if F_diff[-1] < 0.1:
-                F_corr += 1
-            if x_diff[-1] < 1 and y_diff[-1] < 1 and F_diff[-1] < 0.1:
-                total_corr += 1
+            if(label[2] != 0):
+                output = model(test_dataset[i][0]).numpy()
+                x_diff.append(abs(label[0] - output[0]))
+                if x_diff[-1] < 1:
+                    x_corr += 1
+                y_diff.append(abs(label[1] - output[1]))
+                if y_diff[-1] < 1:
+                    y_corr += 1
+                F_diff.append(abs(label[2] - output[2]))
+                if F_diff[-1] < 0.1:
+                    F_corr += 1
+                if x_diff[-1] < 1 and y_diff[-1] < 1 and F_diff[-1] < 0.1:
+                    total_corr += 1
     x2 = [x ** 2 for x in x_diff]
     y2 = [x ** 2 for x in y_diff]
     F2 = [x ** 2 for x in F_diff]

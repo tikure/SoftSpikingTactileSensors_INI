@@ -9,7 +9,7 @@ sys.path.append("./Functions")
 
 from SensorCollectionFunctions import *
 
-filename = "_AFG_test_new_board15"
+filename = "_AFG_flex_50_2"
 z_offset = 2
 s_sensor = serial.Serial(port="COM5", baudrate=115200, bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
 s_printer = serial.Serial(port="COM8", baudrate=250000)
@@ -84,7 +84,7 @@ sensor_data = []
 setpos(0, 0, 0, s_printer)
 
 """Collect Data"""
-iterations = 10
+iterations = 50
 # print(f"Estimated time to completion: {round(170*iterations/60,0)}min")
 grid_x = 9  # Steps for sampling + 1 due to indexing
 grid_y = 9  # = grid_x, normally
@@ -124,13 +124,19 @@ for iteration in range(1, iterations + 1):
                 sensor_data.append(b20)
                 truths.append([g_x_mm, g_y_mm, 0])
             setpos(g_x_mm, g_y_mm, 0, s_printer)  # Move above sensor again
-
-    if iteration % 1 == 0:
+    setpos(0,0,0,s_printer)
+    if iteration % 5 == 0:
         print(f"Iterations: {iteration}/{iterations}")
         time_for_iteration = round(time.time() - time_start, 1) - time_for_iteration
         np.savetxt("./Data/b20_artillery" + filename + ".txt", sensor_data, fmt="%s")
         np.savetxt("./Data/truths_artillery" + filename + ".txt", truths, fmt="%s")
         print("Data Saved")
+    if iteration == int(iterations/2):
+        print("Collecting Normalization Data")
+        for i in range(int(norm_count / 2)):
+            b20 = read_sensor(s_sensor)
+            norm_data.append(b20)
+        np.savetxt("./Data/norm_b20_artillery" + filename + ".txt", norm_data, fmt="%s")
     if iteration == 1:
         print("Time for Iteration: ", time_for_iteration)
         #now = datetime.datetime.now()
@@ -152,8 +158,7 @@ for iteration in range(1, iterations + 1):
         plt.ylabel("Y [mm]")
         plt.xlabel("X [mm]")
         plt.show()
-        if iteration % 2 == 0:
-            print("Why")
+        setpos(0,0,0,s_printer)
 setpos(0, 0, 0, s_printer)
 
 """Collect Normalization after run"""

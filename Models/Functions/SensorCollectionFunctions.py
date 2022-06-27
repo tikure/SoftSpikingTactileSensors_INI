@@ -64,6 +64,10 @@ def read_sensor(s_sensor):
     # time.sleep(0.001)
 
     b20 = [float(b) for b in serialString.split()]
+
+    if len(b20) != 20:
+        print("SDI: ", len(b20))
+        #b20 = read_sensor(s_sensor)
     return b20
 
 

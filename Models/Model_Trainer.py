@@ -9,34 +9,57 @@ from Data_functions import *
 from Model_functions import *
 
 """Import Training Data"""""
-filenames = ["_AFG_test200","_AFG_test150","_AFG_test"]
-model_name = "_AFG_test450_bad"
-b15, truths, test_truths, norm_val = import_data(filenames, max_N=100, shape="random",include_norm = False)
+#filenames = ["_AFG_Board2_50","_AFG_Board2_50_2"]
+filenames = ["_AFG_board2_50_screw"]
+model_name = "_AFG_board2_screw25%"
+b15, truths, test_truths, norm_val, b15_norm = import_data(filenames, max_N=100, shape="random", include_norm = False,
+                                                 normalization ='divisive', data_count_percent = 50)
 # list of filenames, outlier cutoff, fill value for 0 N or "random" (default)
 np.savetxt("./Data/norm_val_"+model_name + ".txt", norm_val)
 # TODO implement normalized variation
+# TODO implement local normalization
+# DONE implement subtractive normalization
+# TODO comments on Sensor Viewer
+# DONE temporal selection of testing data
+# DONE sigmoid output - doesnt work though
+# TODO new sensors
+
 
 """Plot to confirm data"""
-visualize(b15, test_truths)
+visualize(b15, test_truths, b15_norm)
 
 """Setup Model"""
-model = vanilla_model(15, feature_dim=40, feat_hidden=[200, 200], activation_fn=nn.ReLU, output_hidden=[200, 200],
-                      output_activation=nn.ReLU, feat_activation=None)
+def setup_model():
+    model = vanilla_model(15, feature_dim=40, feat_hidden=[200, 200], activation_fn=nn.ReLU, output_hidden=[200, 200],
+                  output_activation=nn.ReLU, feat_activation=None, scaled_sigmoid=scaled_sigmoid)
+    return model
+    # model.load_state_dict(torch.load("./Data/model50k"))
 
-# model.load_state_dict(torch.load("./Data/model50k"))
+scaled_sigmoid = False #adds scaled sigmoid to output (0-20) #CURRENTLY BREAKS MODEL
+sorting = "temporal" #Is testing data removed randomly or from the end, can be random or temporal
+batch_size = 250
+model = setup_model()
 print(model.eval())
 
 """Setup Data for training"""
 # Setup Loader:
-batch_size = 250
 train_dataset = []
 test_dataset = []
-for i, inputs in enumerate(b15):
-    single_set = [torch.tensor(inputs, dtype=torch.float32), torch.tensor(truths[i], dtype=torch.float32)]
-    if not np.random.randint(10) == 9:
-        train_dataset.append(single_set)
-    else:
-        test_dataset.append(single_set)
+
+if sorting == "random":
+    for i, inputs in enumerate(b15):
+        single_set = [torch.tensor(inputs, dtype=torch.float32), torch.tensor(truths[i], dtype=torch.float32)]
+        if not np.random.randint(10) == 9:
+            train_dataset.append(single_set)
+        else:
+            test_dataset.append(single_set)
+elif sorting == "temporal":
+    for i, inputs in enumerate(b15):
+        single_set = [torch.tensor(inputs, dtype=torch.float32), torch.tensor(truths[i], dtype=torch.float32)]
+        if i < len(b15)* (9/10):# last 10% go to testing data
+            train_dataset.append(single_set)
+        else:
+            test_dataset.append(single_set)
 
 print("Training Set: ", len(train_dataset))
 print("Testing Set: ", len(test_dataset))
@@ -49,23 +72,23 @@ example_data, example_targets = examples.next()
 print(example_data[0])
 print(example_targets[0])
 
-"""Train MLP"""
-num_epochs = 60
-# loss & optimizer
+"""Setup Training"""
+num_epochs = 120
 learning_rate = 0.001
-
 criterion = torch.nn.MSELoss()
 # optimizer = torch.optim.SGD(model.parameters(),lr = learning_rate,momentum = 0.9)
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+prefitted_MLP = False
 
+"""Train MLP"""
 n_total_steps = len(train_loader)
 previous_loss = 1
 losses = []
 overfitting = 0
 print("\n")
 
-if True:
-    evaluate_MLP(model, test_dataset,title="Before training")
+if not prefitted_MLP:
+    #evaluate_MLP(model, test_dataset,title="Before training")
     print("Beginning Training")
     for epoch in range(num_epochs):
         train_loss = 0
@@ -81,16 +104,23 @@ if True:
             train_loss += loss.item()
         epoch_loss = round(train_loss / len(train_dataset), 5)
 
+        if epoch < 120:
+            sum = 0
+            for o in outputs:
+                sum += o[2]
+            #print(sum)
+            if sum.item() < 5:
+                #print("Restarting Model")
+                model = setup_model()
+                epoch = -1
+                previous_loss = -1
+                losses = []
+                overfitting = 0
+                optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
         if epoch % 20 == 0:
             print(f'Epoch [{epoch + 1}], Step [{i + 1}/{n_total_steps}], Loss: {epoch_loss}')
             evaluate_MLP(model, test_dataset,title="Training Epoch:"+str(epoch))
             out = [b[2] for b in outputs]
-            if sum(out) < 1:
-                print("Restarting Model")
-                optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-                model = vanilla_model(15, feature_dim=40, feat_hidden=[200, 200], activation_fn=nn.ReLU,
-                                      output_hidden=[200, 200],
-                                      output_activation=nn.ReLU, feat_activation=None)
         delta_loss = previous_loss - epoch_loss
         if delta_loss < 0.01 * epoch_loss + 0.0001:
             overfitting += 1
@@ -113,4 +143,6 @@ else:
 
 
 """Plot error for comprehension"""
-evaluate_MLP(model, test_dataset)
+print(model.eval())
+title = "Final "+ model_name + " \n Sorting: "+ sorting + " \n Scaling: " + str(scaled_sigmoid)
+evaluate_MLP(model, test_dataset, title = title )

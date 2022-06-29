@@ -6,7 +6,7 @@ import matplotlib.pylab as plt
 import torch
 
 
-def import_data(filenames, max_N=3, shape="random" , include_norm = False):
+def import_data(filenames, max_N=3, shape="random" , include_norm = False, normalization = "divisive", data_count_percent = 100):
     """Open Files"""
     b20 = []
     for i, filename in enumerate(filenames):
@@ -23,9 +23,13 @@ def import_data(filenames, max_N=3, shape="random" , include_norm = False):
     if len(b20) != len(truths):
         raise Exception("Arrays not of equal length")
 
+    if data_count_percent != 100:
+        data_count = int((len(b20)*data_count_percent)/100)
+        b20 = b20[:data_count]
+        truths = truths [:data_count]
     """Format Data"""
 
-    if include_norm:
+    if include_norm: #Includes normalization data in model
         print("Beginning Norm")
         print("len b20:",len(b20))
         b20 = np.concatenate(b20, b20_norm)
@@ -33,9 +37,11 @@ def import_data(filenames, max_N=3, shape="random" , include_norm = False):
         print("len b20:", len(b20))
 
     """Setup Data"""
+    """We only care about 1,2,3 (xyz) not 4 (T) per sensor"""
     b15_norm = [np.concatenate((b[0:3], b[4:7], b[8:11], b[12:15], b[16:19])) for b in
-                b20_norm]  # We only care about 1,2,3 (xyz) not 4 (T) per sensor
+                b20_norm]
     b15 = [np.concatenate((b[0:3], b[4:7], b[8:11], b[12:15], b[16:19])) for b in b20]
+
     # Setup normalization
     norm_val = []
     for i in range(len(b15_norm[0])):
@@ -44,8 +50,17 @@ def import_data(filenames, max_N=3, shape="random" , include_norm = False):
             mean += b[i]
         mean = mean / count
         norm_val.append(mean)
+    if normalization == "divisive":
+        b15 = [b / norm_val for b in b15]
+    elif normalization == "subtractive":
+        b15 = [b - norm_val for b in b15]
+    elif normalization == "local":
+        b15 = [b -mean(b15[i-200:i-1]) for i,b in enumerate(b15[201: ])]
+    elif normalization == "div_local":
+        b15 = [b / mean(b15[i - 200:i - 1]) for i,b in enumerate(b15[201:])]
+    else:
+        raise Exception("Incorrect Normalization")
 
-    b15 = [b / norm_val for b in b15]
     test_truths = [tr[2] for tr in truths]
 
 
@@ -54,10 +69,10 @@ def import_data(filenames, max_N=3, shape="random" , include_norm = False):
     truths = [truths[i] for i, t in enumerate(test_truths) if t < max_N]
     test_truths = [tr[2] for tr in truths]
 
-    if shape == "random":
+    if shape == "random":#Randomly assigns 0 force values to avoid biasing
         truths = [truths[i] if t > 0 else [np.random.randint(3, 17, 1)[0], np.random.randint(3, 17, 1)[0], 0] for i, t
                   in enumerate(test_truths)]
-    else:
+    else: #Assigns 0 force values to a number (shape/shape/0)
         truths = [truths[i] if t > 0 else [shape, shape, 0] for i, t in enumerate(test_truths)]
     test_truths = [tr[2] for tr in truths]
 
@@ -73,15 +88,38 @@ def import_data(filenames, max_N=3, shape="random" , include_norm = False):
     if (len(b15) != len(truths)) or len(b15[0]) != 15 or len(truths[0]) != 3:
         raise Exception("Arrays not of equal length")
 
-    return b15, truths, test_truths, norm_val
+    return b15, truths, test_truths, norm_val, b15_norm
 
 
-def visualize(b15, test_truths):
+def visualize(b15, test_truths, b15_norm):
+    """Plot Norm Val"""
+    x = [[b[0] for b in b15_norm], [b[3] for b in b15_norm], [b[6] for b in b15_norm], [b[9] for b in b15_norm],
+         [b[12] for b in b15_norm]]
+    y = [[b[1] for b in b15_norm], [b[4] for b in b15_norm], [b[7] for b in b15_norm], [b[10] for b in b15_norm],
+         [b[13] for b in b15_norm]]
+    z = [[b[2] for b in b15_norm], [b[5] for b in b15_norm], [b[8] for b in b15_norm], [b[11] for b in b15_norm],
+         [b[14] for b in b15_norm]]
+
+    fig, axs = plt.subplots(3, 1, sharex=True)
+    fig.suptitle('Normalization Data')
+
+    axs[0].set_ylabel("X Sensor data")
+    axs[1].set_ylabel("Y Sensor data")
+    axs[2].set_ylabel("Z Sensor data")
+    axs[2].set_xlabel("Samples")
+    for x_n in x:
+        axs[0].plot(x_n, ",")
+    for y_n in y:
+        axs[1].plot(y_n, ",")
+    for i, z_n in enumerate(z):
+        axs[2].plot(z_n, ",", label="S" + str(i + 1))
+    plt.legend(loc='upper right', prop={'size': 5})
+    plt.show()
+
+    """Plots sensor data against truths"""
     x = [[b[0] for b in b15], [b[3] for b in b15], [b[6] for b in b15], [b[9] for b in b15], [b[12] for b in b15]]
     y = [[b[1] for b in b15], [b[4] for b in b15], [b[7] for b in b15], [b[10] for b in b15], [b[13] for b in b15]]
     z = [[b[2] for b in b15], [b[5] for b in b15], [b[8] for b in b15], [b[11] for b in b15], [b[14] for b in b15]]
-
-    """Plots sensor data against truths"""
 
     fig, axs = plt.subplots(4, 1, sharex=True)
     fig.suptitle('Total Data')
@@ -120,13 +158,6 @@ def visualize(b15, test_truths):
         axs[1][0].plot(n[50:50 + subset])
         axs[1][1].plot(n[loc:loc + subset])
         axs[1][2].plot(n[-subset:])
-    """
-    for ax in axs[1:]:
-        for a in ax:
-            a.set_ylim(-8, 8)
-    for a in axs[0]:
-        a.set_ylim(-1, 5)
-    """
     for n in y:
         axs[2][0].plot(n[50:50 + subset])
         axs[2][1].plot(n[loc:loc + subset])
@@ -207,10 +238,10 @@ def evaluate_MLP(model,test_dataset, title = ""):
     print(f"Y   {np.mean(y_diff):.2f}mm | {np.mean(y2):.2f} | {np.std(y_diff):.2f}")
     print(f"F   {np.mean(F_diff):.2f}N  | {np.mean(F2):.2f} | {np.std(F_diff):.2f}")
     print("-------------------------\n")
-    print(f"X 1mm accuracy: {(x_corr / check) * 100}%")
-    print(f"Y 1mm accuracy: {(y_corr / check) * 100}%")
-    print(f"F 0.1N accuracy: {(F_corr / check) * 100}%")
-    print(f"Complete accuracy {total_corr / check * 100}%")
+    print(f"X 1mm accuracy: {round(x_corr / check * 100,1)}%")
+    print(f"Y 1mm accuracy: {round(y_corr / check * 100,1)}%")
+    print(f"F 0.1N accuracy: {round(F_corr / check * 100,1)}%")
+    print(f"Complete accuracy {round(total_corr / check * 100,1)}%")
 
 
     diff.boxplot([x_diff, y_diff, F_diff])
@@ -219,6 +250,6 @@ def evaluate_MLP(model,test_dataset, title = ""):
 
     acc.set_xlim(0, 20)
     acc.set_ylim(0, 20)
-    acc.set_title(title+" Model Accuracy")
+    acc.set_title(title + f"\n Complete accuracy {round(total_corr / check * 100,1)}%")
     plt.legend(prop={'size': 8})
     plt.show()

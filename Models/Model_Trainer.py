@@ -10,10 +10,10 @@ from Model_functions import *
 
 """Import Training Data"""""
 #filenames = ["_AFG_Board2_50","_AFG_Board2_50_2"]
-filenames = ["_AFG_board2_50"]
-model_name = "_AFG_board2"
+filenames = ["_AFG_board2_50_screw","_AFG_board2_50_2_screw"]
+model_name = "_AFG_board2_screw_2"
 b15, truths, test_truths, norm_val, b15_norm = import_data(filenames, max_N=100, shape="random", include_norm = False,
-                                                 normalization ='divisive', data_count_percent = 50)
+                                                 normalization ='divisive', data_count_percent = 100)
 # list of filenames, outlier cutoff, fill value for 0 N or "random" (default)
 np.savetxt("./Data/norm_val_"+model_name + ".txt", norm_val)
 # TODO implement normalized variation

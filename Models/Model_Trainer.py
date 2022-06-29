@@ -10,19 +10,19 @@ from Model_functions import *
 
 """Import Training Data"""""
 #filenames = ["_AFG_Board2_50","_AFG_Board2_50_2"]
-filenames = ["_AFG_board2_50_screw"]
-model_name = "_AFG_board2_screw25%"
+filenames = ["_AFG_board2_50"]
+model_name = "_AFG_board2"
 b15, truths, test_truths, norm_val, b15_norm = import_data(filenames, max_N=100, shape="random", include_norm = False,
                                                  normalization ='divisive', data_count_percent = 50)
 # list of filenames, outlier cutoff, fill value for 0 N or "random" (default)
 np.savetxt("./Data/norm_val_"+model_name + ".txt", norm_val)
 # TODO implement normalized variation
-# TODO implement local normalization
-# DONE implement subtractive normalization
+# DONE implement local normalization - amplifies only very small parts, not training efficient
+# DONE implement subtractive normalization - sensors with higher norm val are also have higher variance so divisive is preffereable
 # TODO comments on Sensor Viewer
-# DONE temporal selection of testing data
-# DONE sigmoid output - doesnt work though
-# TODO new sensors
+# DONE temporal selection of testing data - changes little about training accuracy
+# DONE sigmoid output - implmenented but does not train well
+# DONE new sensors - board2 is same as original board
 
 
 """Plot to confirm data"""

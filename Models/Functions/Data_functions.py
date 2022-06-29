@@ -14,12 +14,14 @@ def import_data(filenames, max_N=3, shape="random" , include_norm = False, norma
             b20 = np.loadtxt("./Data/b20_artillery" + filename + ".txt", dtype=float)
             b20_norm = np.loadtxt("./Data/norm_b20_artillery" + filename + ".txt", dtype=float)
             truths = np.loadtxt("./Data/truths_artillery" + filename + ".txt", dtype=float)
+            print(f"{filename}: {len(b20)} Samples")
         else:
+            init_len = len(b20)
             b20 = np.concatenate((b20, np.loadtxt("./Data/b20_artillery" + filename + ".txt", dtype=float)))
             b20_norm = np.concatenate(
                 (b20_norm, np.loadtxt("./Data/norm_b20_artillery" + filename + ".txt", dtype=float)))
             truths = np.concatenate((truths, np.loadtxt("./Data/truths_artillery" + filename + ".txt", dtype=float)))
-
+            print(f"{filename}: {len(b20)-init_len} Samples!")
     if len(b20) != len(truths):
         raise Exception("Arrays not of equal length")
 
@@ -54,10 +56,21 @@ def import_data(filenames, max_N=3, shape="random" , include_norm = False, norma
         b15 = [b / norm_val for b in b15]
     elif normalization == "subtractive":
         b15 = [b - norm_val for b in b15]
-    elif normalization == "local":
-        b15 = [b -mean(b15[i-200:i-1]) for i,b in enumerate(b15[201: ])]
+    elif normalization == "sub_local":
+        area = 50
+        for i, b in enumerate(b15):
+            if i > area:
+                b15[i] = b15[i] - np.mean(b15[i - area:i])
+        b15 = b15[area + 1:]
+        truths = truths[area + 1:]
     elif normalization == "div_local":
-        b15 = [b / mean(b15[i - 200:i - 1]) for i,b in enumerate(b15[201:])]
+        area = 50
+        for i,b in enumerate(b15):
+            if i > area:
+                b15[i] = b15[i] / np.mean(b15[i-area:i])
+        b15 = b15[area+1:]
+        truths = truths[area+1:]
+
     else:
         raise Exception("Incorrect Normalization")
 

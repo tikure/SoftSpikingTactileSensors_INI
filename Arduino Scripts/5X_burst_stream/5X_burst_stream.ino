@@ -142,6 +142,6 @@ void loop()
   //Serial.println("Loop Complete");
   
   //adjust delay to achieve desired sampling rate
-  delayMicroseconds(500);
+  delay(200);
   
 }

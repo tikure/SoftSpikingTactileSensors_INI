@@ -17,13 +17,13 @@ def read_force(s_AFG):
         force_N2 = s_AFG.readline().decode().strip()
         while force_N == '':  # Incase empty bit arrives
             s_AFG.flushInput()
-            s_AFG.write(0x3F)  # ? 63 0x3F Transmit the current reading
+            #s_AFG.write(0x3F)  # ? 63 0x3F Transmit the current reading
             force_N = s_AFG.readline().decode().strip()
         force_N = round(abs(float(force_N)),3)
         time.sleep(0.01)
         while force_N2 == '':  # Incase empty bit arrives
             s_AFG.flushInput()
-            s_AFG.write(0x3F)  # ? 63 0x3F Transmit the current reading
+            #s_AFG.write(0x3F)  # ? 63 0x3F Transmit the current reading
             force_N2 = s_AFG.readline().decode().strip()
         force_N2 = round(abs(float(force_N2)),3)
         if abs(force_N - force_N2) <= force_N*0.1:
@@ -102,8 +102,11 @@ def initialize_printer(s_printer):
     # setpos(x_def, y_def, z_def)
     print(read_printer(s_printer))
     time.sleep(5)
-    #setpos(0,0,0,s_printer)
+    print('Sending: ' + "G92")
+    s_printer.write("G92 X0 Y0 Z0\n".encode())
+    setpos(-1,-1,0,s_printer)
+    print(read_printer(s_printer))
     print('Sending: ' + "G92")
     s_printer.write("G92 X0 Y0 Z0\n".encode())
     print(read_printer(s_printer))
-    time.sleep(1)
+    time.sleep(15)

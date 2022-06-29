@@ -8,16 +8,17 @@ import datetime
 sys.path.append("./Functions")
 
 from SensorCollectionFunctions import *
+from Data_functions import *
 
-filename = "_AFG_flex_50_2"
+filename = "_AFG_board2_50_screw"
 z_offset = 2
-s_sensor = serial.Serial(port="COM5", baudrate=115200, bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
-s_printer = serial.Serial(port="COM8", baudrate=250000)
-s_Force = serial.Serial(port = "COM7", baudrate=115200,bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
+s_sensor = serial.Serial(port="COM8", baudrate=115200, bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
+s_printer = serial.Serial(port="COM10", baudrate=250000)
+s_Force = serial.Serial(port = "COM11", baudrate=115200,bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
 #s_piezo = serial.Serial(port="COM3", baudrate=9600)
 
 feedrate = "1600"
-#setpos(0, 0, 0, s_printer)
+#setpos(1, 1, -0.2, s_printer)
 initialize_printer(s_printer)
 time.sleep(1)
 print("Move Printer Check: New Pos = 10/10/0")
@@ -58,7 +59,7 @@ print("----------Initial Checks Completed, commencing data collection-----------
 
 """Normalization Values collected before and after"""
 norm_data = []
-setpos(0, 0, 0, s_printer)  # Return to origin, not touching pad
+#setpos(1, 1, 0, s_printer)  # Return to origin, not touching pad
 time.sleep(1)
 print("Collecting Normalization Data")
 norm_count = 10000
@@ -76,7 +77,7 @@ notest = []
 for i in (1,9):
     for q in (1,9):
         notest.append([i, q])
-notest.append([0, 5, 3])
+
 #notest = []
 
 truths = []
@@ -86,7 +87,7 @@ setpos(0, 0, 0, s_printer)
 """Collect Data"""
 iterations = 50
 # print(f"Estimated time to completion: {round(170*iterations/60,0)}min")
-grid_x = 9  # Steps for sampling + 1 due to indexing
+grid_x = 9 # Steps for sampling + 1 due to indexing
 grid_y = 9  # = grid_x, normally
 jump_mm = 18 / grid_x
 z_depths = [0.4, 0.6, 0.8, 1, 1.2, 1.4]  # how much to indent sensor
@@ -138,6 +139,8 @@ for iteration in range(1, iterations + 1):
             norm_data.append(b20)
         np.savetxt("./Data/norm_b20_artillery" + filename + ".txt", norm_data, fmt="%s")
     if iteration == 1:
+        print(f"Iterations: {iteration}/{iterations}")
+        time_for_iteration = round(time.time() - time_start, 1) - time_for_iteration
         print("Time for Iteration: ", time_for_iteration)
         #now = datetime.datetime.now()
         #print(now.hour, now.minute)
@@ -159,7 +162,15 @@ for iteration in range(1, iterations + 1):
         plt.xlabel("X [mm]")
         plt.show()
         setpos(0,0,0,s_printer)
-setpos(0, 0, 0, s_printer)
+        b15 = [np.concatenate((b[0:3], b[4:7], b[8:11], b[12:15], b[16:19])) for b in sensor_data]
+        test_truths = [truth[2] for truth in truths]
+        visualize(b15,test_truths)
+
+
+setpos(1,1,0,s_printer)
+print('Sending: ' + "G92")
+s_printer.write("G92 X0 Y0 Z0\n".encode())
+
 
 """Collect Normalization after run"""
 # Normalization values:

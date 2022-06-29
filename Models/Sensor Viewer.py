@@ -15,30 +15,32 @@ matplotlib.use("TkAgg")
 
 sys.path.append("./Functions")
 from Model_functions import *
+from SensorCollectionFunctions import *
 
 
 """Setup Connection"""
 s_sensor = serial.Serial(port = "COM8", baudrate=115200,bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
-
-def read_sensor(norm = True):#Norm decides wether sensory data is normalized after reading
-    """Reads ReSkin Sensor from arduino over serial"""
-    s_sensor.flushInput()
-    serialString = s_sensor.readline()
-    serialString = serialString.decode('Ascii')
-    b = [float(b) for b in serialString.split()]
-    b15 = np.array(np.concatenate((b[0:3],b[4:7],b[8:11],b[12:15],b[16:19])))
-    if norm:
-        b15 = b15/norm_val
-    return b15
+print(read_sensor(s_sensor))
 
 
 """Load Normalization Values of Model"""
-model_name = "Train_Trial"
+model_name = "_AFG_test400"
 norm_val = np.loadtxt("./Data/norm_val_"+model_name+".txt",dtype = float)
+b15_norm = []
+for i in range(500):
+    b = read_sensor(s_sensor)
+    b15  = np.array(np.concatenate((b[0:3],b[4:7],b[8:11],b[12:15],b[16:19])))
+    b15_norm.append(b15)
+norm_val = []
+for i in range(len(b15_norm[0])):
+    mean = 0
+    for count, b in enumerate(b15_norm):
+        mean += b[i]
+    mean = mean / count
+    norm_val.append(mean)
 print(f"Normalization Values: {len(norm_val)},{norm_val}")
 
-print("Normalized Sensor Values: ",read_sensor())#Check if sensor works
-print("True Sensor Values: ",read_sensor(False))
+print("Normalized Sensor Values: ",read_sensor(s_sensor))#Check if sensor works
 
 """Setup Model"""
 model = vanilla_model(15, feature_dim=40, feat_hidden=[200,200], activation_fn=nn.ReLU, output_hidden=[200,200],
@@ -46,8 +48,23 @@ model = vanilla_model(15, feature_dim=40, feat_hidden=[200,200], activation_fn=n
 
 model.load_state_dict(torch.load("./Data/MLP_"+model_name))
 print(model.eval)
+truths = [0,0,0]
+while 1:
+    b = read_sensor(s_sensor)
+    b15 = np.array(np.concatenate((b[0:3], b[4:7], b[8:11], b[12:15], b[16:19])))
+    b15 = b15 / norm_val
+    #print("Sensor Value: ",b15)
+    single_set = [torch.tensor(b15, dtype=torch.float32), torch.tensor(truths[0], dtype=torch.float32)]
+    xyF = model(single_set[0])
+
+    print(f"Predicted [X, Y, F] {xyF.detach().numpy()}")
+    time.sleep(1)
+
+
+
 
 """Plot data in realtime"""
+"""
 import matplotlib.pyplot as plt
 import numpy as np
 i = 0
@@ -112,3 +129,4 @@ for phase in np.linspace(0, 10*np.pi, 500):
 
 plt.ioff()
 plt.show()
+"""

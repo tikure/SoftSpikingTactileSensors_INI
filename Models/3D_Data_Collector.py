@@ -148,7 +148,7 @@ for iteration in range(1, iterations + 1):
         visualize(b15,test_truths)
 
 
-setpos(1,1,0,s_printer)
+#setpos(1,1,0,s_printer)
 print('Sending: ' + "G92")
 s_printer.write("G92 X0 Y0 Z0\n".encode())
 

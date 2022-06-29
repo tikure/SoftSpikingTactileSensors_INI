@@ -91,30 +91,31 @@ def import_data(filenames, max_N=3, shape="random" , include_norm = False, norma
     return b15, truths, test_truths, norm_val, b15_norm
 
 
-def visualize(b15, test_truths, b15_norm):
+def visualize(b15, test_truths, b15_norm = False):
     """Plot Norm Val"""
-    x = [[b[0] for b in b15_norm], [b[3] for b in b15_norm], [b[6] for b in b15_norm], [b[9] for b in b15_norm],
-         [b[12] for b in b15_norm]]
-    y = [[b[1] for b in b15_norm], [b[4] for b in b15_norm], [b[7] for b in b15_norm], [b[10] for b in b15_norm],
-         [b[13] for b in b15_norm]]
-    z = [[b[2] for b in b15_norm], [b[5] for b in b15_norm], [b[8] for b in b15_norm], [b[11] for b in b15_norm],
-         [b[14] for b in b15_norm]]
+    if b15_norm != False:
+        x = [[b[0] for b in b15_norm], [b[3] for b in b15_norm], [b[6] for b in b15_norm], [b[9] for b in b15_norm],
+             [b[12] for b in b15_norm]]
+        y = [[b[1] for b in b15_norm], [b[4] for b in b15_norm], [b[7] for b in b15_norm], [b[10] for b in b15_norm],
+             [b[13] for b in b15_norm]]
+        z = [[b[2] for b in b15_norm], [b[5] for b in b15_norm], [b[8] for b in b15_norm], [b[11] for b in b15_norm],
+             [b[14] for b in b15_norm]]
 
-    fig, axs = plt.subplots(3, 1, sharex=True)
-    fig.suptitle('Normalization Data')
+        fig, axs = plt.subplots(3, 1, sharex=True)
+        fig.suptitle('Normalization Data')
 
-    axs[0].set_ylabel("X Sensor data")
-    axs[1].set_ylabel("Y Sensor data")
-    axs[2].set_ylabel("Z Sensor data")
-    axs[2].set_xlabel("Samples")
-    for x_n in x:
-        axs[0].plot(x_n, ",")
-    for y_n in y:
-        axs[1].plot(y_n, ",")
-    for i, z_n in enumerate(z):
-        axs[2].plot(z_n, ",", label="S" + str(i + 1))
-    plt.legend(loc='upper right', prop={'size': 5})
-    plt.show()
+        axs[0].set_ylabel("X Sensor data")
+        axs[1].set_ylabel("Y Sensor data")
+        axs[2].set_ylabel("Z Sensor data")
+        axs[2].set_xlabel("Samples")
+        for x_n in x:
+            axs[0].plot(x_n, ",")
+        for y_n in y:
+            axs[1].plot(y_n, ",")
+        for i, z_n in enumerate(z):
+            axs[2].plot(z_n, ",", label="S" + str(i + 1))
+        plt.legend(loc='upper right', prop={'size': 5})
+        plt.show()
 
     """Plots sensor data against truths"""
     x = [[b[0] for b in b15], [b[3] for b in b15], [b[6] for b in b15], [b[9] for b in b15], [b[12] for b in b15]]

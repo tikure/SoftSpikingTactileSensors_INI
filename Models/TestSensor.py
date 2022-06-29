@@ -12,21 +12,21 @@ sys.path.append("./Functions")
 from SensorCollectionFunctions import *
 from Model_functions import *
 
-s_printer = serial.Serial(port="COM4", baudrate=250000)
-s_Force = serial.Serial(port = "COM7", baudrate=115200,bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
-s_sensor = serial.Serial(port="COM5", baudrate=115200, bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
-
+s_sensor = serial.Serial(port="COM8", baudrate=115200, bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
+s_printer = serial.Serial(port="COM10", baudrate=250000)
+s_Force = serial.Serial(port = "COM11", baudrate=115200,bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
 feedrate = "1600"
-setpos(0,0,0, s_printer)
+
+#setpos(1,1,0, s_printer)
 initialize_printer(s_printer)
-time.sleep(1)
+#time.sleep(1)
 
 """Load Normalization Values of Model"""
-model_name = "AFG_test200"
-norm_val_og= np.loadtxt("./Data/norm_val__"+model_name+".txt",dtype = float)
+model_name = "_AFG_board2_screw"
+norm_val_og= np.loadtxt("./Data/norm_val_"+model_name+".txt",dtype = float)
 b15_norm = []
 print("Collecting Norm Val")
-for i in range(5000):
+for i in range(250):
     b = read_sensor(s_sensor)
     b15  = np.array(np.concatenate((b[0:3],b[4:7],b[8:11],b[12:15],b[16:19])))
     b15_norm.append(b15)
@@ -38,27 +38,34 @@ for i in range(len(b15_norm[0])):
     mean = mean / count
     norm_val.append(mean)
 print("Training Norm Values: ",norm_val_og)
-print(f"Normalization Values: {len(norm_val)},{norm_val}")
+print(f"New Norm Values: ", norm_val)
+norm_val = norm_val_og
 
 b = read_sensor(s_sensor)
 b15  = np.array(np.concatenate((b[0:3],b[4:7],b[8:11],b[12:15],b[16:19])))
 print("Sensor Values: ",b)#Check if sensor works
 print("Normalized Sensor Values: ",b15 /norm_val)#Check if sensor works
-print("Training Norm Sensor Values: ",b15 /norm_val_og)#Check if sensor works
+print("New Norm Values: ",b15 /norm_val_og)#Check if sensor works
+
+#calibrate_force(s_printer,s_Force)
+
+norm_val = norm_val_og
 """Setup Model"""
 model = vanilla_model(15, feature_dim=40, feat_hidden=[200,200], activation_fn=nn.ReLU, output_hidden=[200,200],
                             output_activation=nn.ReLU)
 
-model.load_state_dict(torch.load("./Data/MLP__"+model_name))
+model.load_state_dict(torch.load("./Data/MLP_"+model_name))
 print(model.eval)
 truths = [0,0,0]
-while 1:
+
+for i in range(10):
     print("---------------")
-    loc = np.random.randint(2,18,2)
-    depths = np.random.randint(3,4,1)
+    loc = np.random.randint(5,15,2)
+    depths = np.random.randint(15,22,1)
+    depths = round(depths[0]/10,1)
     setpos(loc[0],loc[1], 0 ,s_printer)
-    setpos(loc[0], loc[1], -depths[0], s_printer)
-    time.sleep(1)
+    setpos(loc[0], loc[1], -depths, s_printer)
+    time.sleep(0.5)
     b = read_sensor(s_sensor)
     truth = [loc[0], loc[1], read_force(s_Force)]
     b15  = np.array(np.concatenate((b[0:3],b[4:7],b[8:11],b[12:15],b[16:19])))
@@ -66,11 +73,15 @@ while 1:
     #print(b15)
     single_set = [torch.tensor(b15, dtype=torch.float32), torch.tensor(truths[0], dtype=torch.float32)]
     xyF = model(single_set[0])
-
-    print(f"Predicted [X, Y, F] {xyF.detach().numpy()}")
-    print(f"Real      [X, Y, F] {truth}, (Z: {read_printer(s_printer)[2]}")
+    xyF = xyF.detach().numpy()
+    xyF = [round(a,4) for a in xyF]
+    print(f"Predicted [X, Y, F] {xyF}")
+    print(f"Real      [X, Y, F] {truth}, (Z: {read_printer(s_printer)[2]})")
     time.sleep(3)
     setpos(loc[0], loc[1], 0, s_printer)
     setpos(0, 0, 0, s_printer)
-    time.sleep(1)
+    time.sleep(0.5)
 
+setpos(1,1,0,s_printer)
+print('Sending: ' + "G92")
+s_printer.write("G92 X0 Y0 Z0\n".encode())

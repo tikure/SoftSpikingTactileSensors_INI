@@ -10,7 +10,7 @@ sys.path.append("./Functions")
 from SensorCollectionFunctions import *
 from Data_functions import *
 
-filename = "_AFG_board2_50_screw"
+filename = "_AFG_board2_50_2_screw"
 z_offset = 2
 s_sensor = serial.Serial(port="COM8", baudrate=115200, bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
 s_printer = serial.Serial(port="COM10", baudrate=250000)
@@ -18,7 +18,7 @@ s_Force = serial.Serial(port = "COM11", baudrate=115200,bytesize=8, timeout=2, s
 #s_piezo = serial.Serial(port="COM3", baudrate=9600)
 
 feedrate = "1600"
-#setpos(1, 1, -0.2, s_printer)
+setpos(1, 1, -0, s_printer)
 initialize_printer(s_printer)
 time.sleep(1)
 print("Move Printer Check: New Pos = 10/10/0")
@@ -35,26 +35,7 @@ if len(b20) != 20 or F != 0 or pos != [10.0, 10.0, 0.0]:
 setpos(0, 0, 0, s_printer)  # Return to origin, not touching pad
 
 """Force Sensor Calibration"""
-print("Calibrating Force")
-setpos(10, 10, -0.5, s_printer)
-time.sleep(2)
-
-z_depths = np.arange(0, 1.8+z_offset, 0.05)
-forces = []
-
-for z in z_depths:
-    setpos(10, 10, -z, s_printer)
-    forces.append(read_force(s_Force))
-    # print(read_printer(s_printer))
-
-setpos(10, 10, 0, s_printer)
-setpos(0,0,0, s_printer)
-plt.vlines(x=z_offset,ymin = 0, ymax = max(forces)+1,colors="r")
-plt.plot(z_depths, forces)
-plt.title("Force Sensor Calibration")
-plt.xlabel("z_depth")
-plt.ylabel("Force [N]")
-plt.show()
+calibrate_force(s_printer,s_Force)
 print("----------Initial Checks Completed, commencing data collection------------------\n\n")
 
 """Normalization Values collected before and after"""

@@ -109,4 +109,26 @@ def initialize_printer(s_printer):
     print('Sending: ' + "G92")
     s_printer.write("G92 X0 Y0 Z0\n".encode())
     print(read_printer(s_printer))
-    time.sleep(15)
+    time.sleep(1)
+
+def calibrate_force(s_printer,s_Force):
+    print("Calibrating Force")
+    setpos(10, 10, -0.5, s_printer)
+    time.sleep(2)
+    z_offset = 2
+    z_depths = np.arange(0, 1.8 + z_offset, 0.05)
+    forces = []
+
+    for z in z_depths:
+        setpos(10, 10, -z, s_printer)
+        forces.append(read_force(s_Force))
+        # print(read_printer(s_printer))
+
+    setpos(10, 10, 0, s_printer)
+    setpos(0, 0, 0, s_printer)
+    plt.vlines(x=z_offset, ymin=0, ymax=max(forces) + 1, colors="r")
+    plt.plot(z_depths, forces)
+    plt.title("Force Sensor Calibration")
+    plt.xlabel("z_depth")
+    plt.ylabel("Force [N]")
+    plt.show()

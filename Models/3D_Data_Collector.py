@@ -10,14 +10,14 @@ sys.path.append("./Functions")
 from SensorCollectionFunctions import *
 from Data_functions import *
 
-filename = "_AFG_board2_50_2_screw"
-z_offset = 2
+filename = "_AFG_board1_50_2"
+z_offset = 1
 s_sensor = serial.Serial(port="COM8", baudrate=115200, bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
 s_printer = serial.Serial(port="COM10", baudrate=250000)
 s_Force = serial.Serial(port = "COM11", baudrate=115200,bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
 #s_piezo = serial.Serial(port="COM3", baudrate=9600)
 
-feedrate = "1600"
+feedrate = "1000"
 setpos(1, 1, -0, s_printer)
 initialize_printer(s_printer)
 time.sleep(1)

@@ -72,7 +72,7 @@ def read_sensor(s_sensor):
 
 
 def setpos(X,Y,Z,s_printer):
-    feedrate = "1600"
+    feedrate = "1000"
     """Sets position of 3d printer via serial (Marlin)"""
     line = "G0 "+ " X"+str(X)+" Y"+str(Y)+ " Z"+str(Z)+  " F" + str(feedrate)+"\n"
     s_printer.write(line.encode()) # Send g-code block to grbl
@@ -94,7 +94,7 @@ def initialize_printer(s_printer):
     s_printer.flushInput()  # Flush startup text in serial input
 
     # Set established 0/0/0 pos
-    feedrate = "1600"
+    feedrate = "1000"
 
     print('Sending: ' + "G90")
     s_printer.write("G90\n".encode())
@@ -115,7 +115,7 @@ def calibrate_force(s_printer,s_Force):
     print("Calibrating Force")
     setpos(10, 10, -0.5, s_printer)
     time.sleep(2)
-    z_offset = 2
+    z_offset = 1
     z_depths = np.arange(0, 1.8 + z_offset, 0.05)
     forces = []
 

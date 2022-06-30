@@ -4,11 +4,14 @@ import matplotlib.pyplot as plt
 import time
 import numpy as np
 import sys
-#Model:
-import os
+import datetime
 import torch
 import torch.nn as nn
-from torch.autograd import Function
+
+sys.path.append("./Functions")
+
+from SensorCollectionFunctions import *
+from Model_functions import *
 
 import matplotlib
 matplotlib.use("TkAgg")
@@ -17,17 +20,13 @@ sys.path.append("./Functions")
 from Model_functions import *
 from SensorCollectionFunctions import *
 
-
-"""Setup Connection"""
-s_sensor = serial.Serial(port = "COM8", baudrate=115200,bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
-print(read_sensor(s_sensor))
-
-
+s_sensor = serial.Serial(port="COM3", baudrate=115200, bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
 """Load Normalization Values of Model"""
-model_name = "_AFG_test400"
-norm_val = np.loadtxt("./Data/norm_val_"+model_name+".txt",dtype = float)
+model_name = "_AFG_board2"
+norm_val_og= np.loadtxt("./Data/norm_val_"+model_name+".txt",dtype = float)
 b15_norm = []
-for i in range(500):
+print("Collecting Norm Val")
+for i in range(10):
     b = read_sensor(s_sensor)
     b15  = np.array(np.concatenate((b[0:3],b[4:7],b[8:11],b[12:15],b[16:19])))
     b15_norm.append(b15)
@@ -38,9 +37,15 @@ for i in range(len(b15_norm[0])):
         mean += b[i]
     mean = mean / count
     norm_val.append(mean)
-print(f"Normalization Values: {len(norm_val)},{norm_val}")
+print("Training Norm Values: ", norm_val_og)
+print(f"New Norm Values: ", norm_val)
+#norm_val = norm_val_og
 
-print("Normalized Sensor Values: ",read_sensor(s_sensor))#Check if sensor works
+b = read_sensor(s_sensor)
+b15  = np.array(np.concatenate((b[0:3],b[4:7],b[8:11],b[12:15],b[16:19])))
+print("Sensor Values: ",b)#Check if sensor works
+print("Normalized Sensor Values: ",b15 /norm_val)#Check if sensor works
+print("New Norm Values: ",b15 /norm_val_og)#Check if sensor works
 
 """Setup Model"""
 model = vanilla_model(15, feature_dim=40, feat_hidden=[200,200], activation_fn=nn.ReLU, output_hidden=[200,200],
@@ -49,16 +54,21 @@ model = vanilla_model(15, feature_dim=40, feat_hidden=[200,200], activation_fn=n
 model.load_state_dict(torch.load("./Data/MLP_"+model_name))
 print(model.eval)
 truths = [0,0,0]
-while 1:
+
+for i in range(100):
+    print("---------------")
+    time.sleep(0.5)
     b = read_sensor(s_sensor)
-    b15 = np.array(np.concatenate((b[0:3], b[4:7], b[8:11], b[12:15], b[16:19])))
+    b15  = np.array(np.concatenate((b[0:3],b[4:7],b[8:11],b[12:15],b[16:19])))
     b15 = b15 / norm_val
-    #print("Sensor Value: ",b15)
+    #print(b15)
     single_set = [torch.tensor(b15, dtype=torch.float32), torch.tensor(truths[0], dtype=torch.float32)]
     xyF = model(single_set[0])
+    xyF = xyF.detach().numpy()
+    xyF = [round(a,4) for a in xyF]
+    print(f"Predicted [X, Y, F] {xyF}")
+    time.sleep(0.5)
 
-    print(f"Predicted [X, Y, F] {xyF.detach().numpy()}")
-    time.sleep(1)
 
 
 

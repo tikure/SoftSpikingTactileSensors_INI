@@ -10,10 +10,10 @@ from Model_functions import *
 
 """Import Training Data"""""
 filenames = ["_AFG_Board2_50"]
-#filenames = ["_AFG_board2_50_screw"]
-model_name = "_AFG_board2_pres"
+#filenames = ["_AFG_board2_50_screw","_AFG_board2_50_2_screw"]
+model_name = "_AFG_board2_screw_2"
 b15, truths, test_truths, norm_val, b15_norm = import_data(filenames, max_N=100, shape="random", include_norm = False,
-                                                 normalization ='div_local', data_count_percent = 100)
+                                                 normalization ='divisive', data_count_percent = 100)
 # list of filenames, outlier cutoff, fill value for 0 N or "random" (default)
 np.savetxt("./Data/norm_val_"+model_name + ".txt", norm_val)
 # TODO implement normalized variation
@@ -36,7 +36,7 @@ def setup_model():
     # model.load_state_dict(torch.load("./Data/model50k"))
 
 scaled_sigmoid = False #adds scaled sigmoid to output (0-20) #CURRENTLY BREAKS MODEL
-sorting = "random" #Is testing data removed randomly or from the end, can be random or temporal
+sorting = "temporal" #Is testing data removed randomly or from the end, can be random or temporal
 batch_size = 250
 model = setup_model()
 print(model.eval())
@@ -46,7 +46,7 @@ print(model.eval())
 train_dataset = []
 test_dataset = []
 
-if sorting == "random":
+if sorting == "temporal":
     for i, inputs in enumerate(b15):
         single_set = [torch.tensor(inputs, dtype=torch.float32), torch.tensor(truths[i], dtype=torch.float32)]
         if not np.random.randint(10) == 9:

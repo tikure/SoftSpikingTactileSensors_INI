@@ -9,13 +9,26 @@ from Data_functions import *
 from Model_functions import *
 
 """Import Training Data"""""
-filenames = ["_AFG_Board1_50"]
+filenames = ["_AFG_Board1_50","_AFG_Board2_50"]
 #filenames = ["_AFG_board2_50_screw","_AFG_board2_50_2_screw"]
-model_name = "_AFG_Board1_50"
-b15, truths, test_truths, norm_val, b15_norm = import_data(filenames, max_N=100, shape="random", include_norm = False,
+model_name = "_AFG_Board_double_2"
+b15, truths, test_truths, norm_val, b15_norm = import_data(filenames = ["_AFG_board1_50"], max_N=100, shape="random", include_norm = False,
                                                  normalization ='divisive', data_count_percent = 100)
-# list of filenames, outlier cutoff, fill value for 0 N or "random" (default)
+
+b152, truths2, test_truths2, norm_val2, b15_norm2 = import_data(filenames = ["_AFG_board2_50"], max_N=100, shape="random", include_norm = False,
+                                                 normalization ='divisive', data_count_percent = 100)
+
 np.savetxt("./Data/norm_val_"+model_name + ".txt", norm_val)
+
+b15 = b15 + b152
+truths = truths +truths2
+test_truths = test_truths + test_truths2
+norm_val = norm_val
+b15_norm = b15_norm + b15_norm2
+
+
+# list of filenames, outlier cutoff, fill value for 0 N or "random" (default)
+
 # TODO implement normalized variation
 # DONE implement local normalization - amplifies only very small parts, not training efficient
 # DONE implement subtractive normalization - sensors with higher norm val are also have higher variance so divisive is preffereable

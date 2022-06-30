@@ -9,7 +9,9 @@ import torch
 def import_data(filenames, max_N=3, shape="random" , include_norm = False, normalization = "divisive", data_count_percent = 100):
     """Open Files"""
     b20 = []
+    print(filenames)
     for i, filename in enumerate(filenames):
+        print(filename)
         if i == 0:
             b20 = np.loadtxt("./Data/b20_artillery" + filename + ".txt", dtype=float)
             b20_norm = np.loadtxt("./Data/norm_b20_artillery" + filename + ".txt", dtype=float)

@@ -2,7 +2,7 @@
 import serial
 import matplotlib.pyplot as plt
 import time
-import numpy as np
+#import numpy as np
 import sys
 import datetime
 import torch

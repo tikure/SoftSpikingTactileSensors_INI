@@ -57,8 +57,9 @@ model = vanilla_model(15, feature_dim=40, feat_hidden=[200,200], activation_fn=n
 model.load_state_dict(torch.load("./Data/MLP_"+model_name))
 print(model.eval)
 truths = [0,0,0]
-
-for i in range(10):
+xyF_list = []
+truths_list = []
+for i in range(4):
     print("---------------")
     loc = np.random.randint(5,15,2)
     depths = np.random.randint(25,32,1)
@@ -81,7 +82,29 @@ for i in range(10):
     setpos(loc[0], loc[1], 0, s_printer)
     setpos(0, 0, 0, s_printer)
     time.sleep(0.5)
+    xyF_list.append(xyF)
+    truths_list.append(truths)
 
 setpos(1,1,0,s_printer)
 print('Sending: ' + "G92")
 s_printer.write("G92 X0 Y0 Z0\n".encode())
+
+x = [xyf[0] for xyF in xyF_list]
+y = [xyf[1] for xyF in xyF_list]
+F = [xyf[2] for xyF in xyF_list]
+
+xt = [xyf[0] for xyF in truths_list]
+yt = [xyf[0] for xyF in truths_list]
+Ft = [xyf[0] for xyF in truths_list]
+
+colors = ["r", "g", "b", "y", "m", "c", "k", "burlywood"]
+
+for i,output in enumerate(xyF_list)
+    plt.plot(output[0], output[1], "o",
+                     markersize=output[2]*10, markerfacecolor='none', markeredgecolor=colors[i])
+    label = truths_list[i]
+    acc.plot(label[0], label[1], "x", label=str(label[2]) + "N == " + str(output[2]) + "N",
+             markersize=(label[2]) * 10, color=colors[i])
+plt.xlim(0,20)
+plt.ylim(0,20)
+plt.show()

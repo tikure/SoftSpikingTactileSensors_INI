@@ -15,14 +15,14 @@ from Model_functions import *
 s_sensor = serial.Serial(port="COM8", baudrate=115200, bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
 s_printer = serial.Serial(port="COM10", baudrate=250000)
 s_Force = serial.Serial(port = "COM11", baudrate=115200,bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
-feedrate = "1600"
+feedrate = "1000"
 
 #setpos(1,1,0, s_printer)
 initialize_printer(s_printer)
 #time.sleep(1)
 
 """Load Normalization Values of Model"""
-model_name = "_AFG_board2_screw"
+model_name = "_AFG_board2_screw_2"
 norm_val_og= np.loadtxt("./Data/norm_val_"+model_name+".txt",dtype = float)
 b15_norm = []
 print("Collecting Norm Val")
@@ -47,7 +47,7 @@ print("Sensor Values: ",b)#Check if sensor works
 print("Normalized Sensor Values: ",b15 /norm_val)#Check if sensor works
 print("New Norm Values: ",b15 /norm_val_og)#Check if sensor works
 
-#calibrate_force(s_printer,s_Force)
+calibrate_force(s_printer,s_Force)
 
 norm_val = norm_val_og
 """Setup Model"""
@@ -61,7 +61,7 @@ truths = [0,0,0]
 for i in range(10):
     print("---------------")
     loc = np.random.randint(5,15,2)
-    depths = np.random.randint(15,22,1)
+    depths = np.random.randint(25,32,1)
     depths = round(depths[0]/10,1)
     setpos(loc[0],loc[1], 0 ,s_printer)
     setpos(loc[0], loc[1], -depths, s_printer)

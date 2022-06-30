@@ -17,7 +17,7 @@ s_printer = serial.Serial(port="COM10", baudrate=250000)
 s_Force = serial.Serial(port = "COM11", baudrate=115200,bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
 feedrate = "1000"
 
-#setpos(1,1,0, s_printer)
+setpos(1,1,0, s_printer)
 initialize_printer(s_printer)
 #time.sleep(1)
 
@@ -26,7 +26,7 @@ model_name = "_AFG_Board1_50"
 norm_val_og= np.loadtxt("./Data/norm_val_"+model_name+".txt",dtype = float)
 b15_norm = []
 print("Collecting Norm Val")
-for i in range(100):
+for i in range(1000):
     b = read_sensor(s_sensor)
     b15  = np.array(np.concatenate((b[0:3],b[4:7],b[8:11],b[12:15],b[16:19])))
     b15_norm.append(b15)
@@ -102,5 +102,5 @@ for i,output in enumerate(xyF_list[1:]):
 plt.xlim(0,20)
 plt.ylim(0,20)
 plt.legend()
-plt.title("Sensor Test Results")
+plt.title("Sensor Test Results ", model_name)
 plt.show()

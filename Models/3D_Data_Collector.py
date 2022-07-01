@@ -18,7 +18,7 @@ s_Force = serial.Serial(port = "COM11", baudrate=115200,bytesize=8, timeout=2, s
 #s_piezo = serial.Serial(port="COM3", baudrate=9600)
 
 feedrate = "1000"
-setpos(1, 1, -0, s_printer)
+#setpos(1, 1, -0, s_printer)
 initialize_printer(s_printer)
 time.sleep(1)
 print("Move Printer Check: New Pos = 10/10/0")

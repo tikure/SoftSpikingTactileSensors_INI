@@ -9,9 +9,12 @@ from Data_functions import *
 from Model_functions import *
 
 """Import Training Data"""""
-filenames = ["_AFG_Board1_50","_AFG_Board2_50"]
+filenames = ["_AFG_board1_50_2"]
 #filenames = ["_AFG_board2_50_screw","_AFG_board2_50_2_screw"]
-model_name = "_AFG_Board_double_2"
+model_name = "_AFG_Board1_50_2"
+b15, truths, test_truths, norm_val, b15_norm = import_data(filenames = filenames,  max_N=100, shape="random", include_norm = False,
+                                                 normalization ='divisive', data_count_percent = 100)
+"""
 b15, truths, test_truths, norm_val, b15_norm = import_data(filenames = ["_AFG_board1_50"], max_N=100, shape="random", include_norm = False,
                                                  normalization ='divisive', data_count_percent = 100)
 
@@ -25,7 +28,7 @@ truths = truths +truths2
 test_truths = test_truths + test_truths2
 norm_val = norm_val
 b15_norm = b15_norm + b15_norm2
-
+"""
 
 # list of filenames, outlier cutoff, fill value for 0 N or "random" (default)
 

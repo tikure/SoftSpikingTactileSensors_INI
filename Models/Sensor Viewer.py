@@ -13,68 +13,140 @@ sys.path.append("./Functions")
 from SensorCollectionFunctions import *
 from Model_functions import *
 
-import matplotlib
-matplotlib.use("TkAgg")
+
 
 sys.path.append("./Functions")
 from Model_functions import *
 from SensorCollectionFunctions import *
 
-s_sensor = serial.Serial(port="COM3", baudrate=115200, bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
+
+"""Setup"""
+port = "COM8" #Set port Arduino with sensor is on. (5X_Burst_stream.ino)
+model_name = "_AFG_board2"# _at the start, copy from moddel trainer
+new_normal = "current" #current/training, for new normalization values/at training values, def = "current"
+testing = 0 # True/False Prints everything. and I mean EVERYTHING
+delay = 0.5 #Time between printing new prediction, default = 0.5s
+iterations = 15 #How many times the program should predict
+plot_at_end = 1 #True/False, Wether to plot the results at the end
+
+
+"""Set port for sensor"""
+s_sensor = serial.Serial(port=port, baudrate=115200, bytesize=8, timeout=2, stopbits=serial.STOPBITS_ONE)
+
 """Load Normalization Values of Model"""
-model_name = "_AFG_board2"
 norm_val_og= np.loadtxt("./Data/norm_val_"+model_name+".txt",dtype = float)
 b15_norm = []
-print("Collecting Norm Val")
-for i in range(10):
-    b = read_sensor(s_sensor)
-    b15  = np.array(np.concatenate((b[0:3],b[4:7],b[8:11],b[12:15],b[16:19])))
-    b15_norm.append(b15)
-norm_val = []
-for i in range(len(b15_norm[0])):
-    mean = 0
-    for count, b in enumerate(b15_norm):
-        mean += b[i]
-    mean = mean / count
-    norm_val.append(mean)
-print("Training Norm Values: ", norm_val_og)
-print(f"New Norm Values: ", norm_val)
-#norm_val = norm_val_og
+print("Collecting Norm Val, this may take a second")
+if new_normal == "current":
+    for i in range(15):
+        b = read_sensor(s_sensor)
+        b15  = np.array(np.concatenate((b[0:3],b[4:7],b[8:11],b[12:15],b[16:19])))
+        b15_norm.append(b15)
+    norm_val = []
+    for i in range(len(b15_norm[0])):
+        mean = 0
+        for count, b in enumerate(b15_norm):
+            mean += b[i]
+        mean = mean / count
+        norm_val.append(mean)
+    if testing:
+        print(f"New Norm Values: ", [round(a,2) for a in norm_val])
+else:
+    norm_val = norm_val_og
+if testing:
+    print("Training Norm Values: ", [round(a,2) for a in norm_val_og])
 
+#Check if sensor works
 b = read_sensor(s_sensor)
 b15  = np.array(np.concatenate((b[0:3],b[4:7],b[8:11],b[12:15],b[16:19])))
-print("Sensor Values: ",b)#Check if sensor works
-print("Normalized Sensor Values: ",b15 /norm_val)#Check if sensor works
-print("New Norm Values: ",b15 /norm_val_og)#Check if sensor works
+print("\nSensor Values: ",b)
+print("Normalized Sensor Values: ",np.round(b15 /norm_val,2))#Check if sensor works
+norm_val = np.array(norm_val)
+
+if new_normal == "current" and testing:
+    dev = norm_val-norm_val_og
+    print("Deviation from original norm:", [round(a,0) for a in dev])
+    print("Deviation %:", [str(int(round(a*100,0)))+"%" for a in dev/norm_val])
 
 """Setup Model"""
 model = vanilla_model(15, feature_dim=40, feat_hidden=[200,200], activation_fn=nn.ReLU, output_hidden=[200,200],
-                            output_activation=nn.ReLU)
+                            output_activation=nn.ReLU)#Setup model, carefull to have same pararms as during training
 
-model.load_state_dict(torch.load("./Data/MLP_"+model_name))
-print(model.eval)
+if testing:
+    print()
+    print(model.eval)
+
+model.load_state_dict(torch.load("./Data/MLP_"+model_name))#Load pretrained model
 truths = [0,0,0]
 
-for i in range(100):
-    print("---------------")
+print("\n----------------------------------------")
+print("Predicted [X, Y, F]: [mm, mm, N]")
+xyF_list = []
+
+for i in range(iterations):
+    print("----------------------------------------")
     time.sleep(0.5)
-    b = read_sensor(s_sensor)
-    b15  = np.array(np.concatenate((b[0:3],b[4:7],b[8:11],b[12:15],b[16:19])))
-    b15 = b15 / norm_val
-    #print(b15)
+    b = read_sensor(s_sensor)# Collects 20 datapoints from sensor, x,y,f,T, from 5 sensors
+    b15  = np.array(np.concatenate((b[0:3],b[4:7],b[8:11],b[12:15],b[16:19])))# We only want x,y,f
+    b15 = b15 / norm_val #Normalize sensor values
+    if testing:
+        print("b15: ", [round(a,2) for a in b15])
     single_set = [torch.tensor(b15, dtype=torch.float32), torch.tensor(truths[0], dtype=torch.float32)]
+    #Convert to proper shape for pytorch
+    #TODO Make pytorch nograd so we dont need this weird conversion
     xyF = model(single_set[0])
-    xyF = xyF.detach().numpy()
-    xyF = [round(a,4) for a in xyF]
-    print(f"Predicted [X, Y, F] {xyF}")
-    time.sleep(0.5)
+    xyF = xyF.detach().numpy()#Turn to array
+    xyF = [round(a,2) for a in xyF]
+    xyF_list.append(xyF)
+    if xyF[2] < 0.02 and not testing: #Predicts not being touched as 0N (0.02 since AFG LOD is 0.02)
+        xyF = "Sensor not being touched"
+    print(f"Predicted [X, Y, F]: {xyF}")
+    time.sleep(delay)
 
-
-
+if plot_at_end:
+    for i, output in enumerate(xyF_list[1:]):
+        plt.plot(output[0], output[1], "o",
+                 markersize=output[2] * 10)
+    plt.xlim(0, 20)
+    plt.ylim(0, 20)
+    plt.title("Sensor Test Results " + model_name)
+    plt.show()
 
 
 """Plot data in realtime"""
 """
+def plotInRT(xyF):
+    updated_x = 1
+    updated_y = 2
+    Force = xyF[2]
+
+    line1.set_xdata(updated_x)
+    line1.set_ydata(updated_y)
+    plt.legend(f"Force = {F} N")
+    print("UX",updated_x)
+    figure.canvas.draw()
+
+    figure.canvas.flush_events()
+    time.sleep(0.1)
+
+if plot_in_RT:
+    x = 0
+    y = 0
+    F = 0
+
+    plt.ion()
+
+    figure, ax = plt.subplots(figsize=(8, 6))
+    line1, = ax.plot(x, y)
+
+    plt.title("Dynamic Plot of sensor readings", fontsize=25)
+
+    plt.xlabel("X [mm]", fontsize=18)
+    plt.ylabel("Y [mm]", fontsize=18)
+    plt.xlim(0, 20)
+    plt.ylim(0, 20)
+    plt.legend(f"Force = {F} N")
+    plt.title("Sensor Test Results " + model_name)
 import matplotlib.pyplot as plt
 import numpy as np
 i = 0

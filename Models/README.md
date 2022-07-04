@@ -9,7 +9,7 @@ Model Trainer
 - Uses data collected by 3D Printer to train MLP
 
 
-Sensor Tester
+TestSensor
 - Tests sensor & model accuracy with 3D printer
 
 

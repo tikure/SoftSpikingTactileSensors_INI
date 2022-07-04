@@ -22,8 +22,10 @@ from SensorCollectionFunctions import *
 
 """Setup"""
 port = "COM8" #Set port Arduino with sensor is on. (5X_Burst_stream.ino)
-model_name = "_AFG_board2"# _at the start, copy from moddel trainer
+model_name = "_AFG_board2"# _at the start, copy from model trainer or data folder (files without extension)
 new_normal = "current" #current/training, for new normalization values/at training values, def = "current"
+no_new = 50 #Number of new normalization values collected, on slow boards may want to be reduced to shorten startup time
+# (or run many iterations with large initial startup time) def = 10-5000
 testing = 0 # True/False Prints everything. and I mean EVERYTHING
 delay = 0.5 #Time between printing new prediction, default = 0.5s
 iterations = 15 #How many times the program should predict
@@ -36,9 +38,15 @@ s_sensor = serial.Serial(port=port, baudrate=115200, bytesize=8, timeout=2, stop
 """Load Normalization Values of Model"""
 norm_val_og= np.loadtxt("./Data/norm_val_"+model_name+".txt",dtype = float)
 b15_norm = []
-print("Collecting Norm Val, this may take a second")
+
+start = time.time()
+b = read_sensor(s_sensor)
+b = read_sensor(s_sensor)
+end = (time.time()-start)
+print(f"Collecting Norm Val, this may take ~{round(end*no_new/2,0)}s")
+start = time.time()
 if new_normal == "current":
-    for i in range(15):
+    for i in range(no_new):
         b = read_sensor(s_sensor)
         b15  = np.array(np.concatenate((b[0:3],b[4:7],b[8:11],b[12:15],b[16:19])))
         b15_norm.append(b15)
@@ -55,6 +63,9 @@ else:
     norm_val = norm_val_og
 if testing:
     print("Training Norm Values: ", [round(a,2) for a in norm_val_og])
+end = time.time()-start
+print(f"It took {round((end),3)}s")
+time.sleep(2)
 
 #Check if sensor works
 b = read_sensor(s_sensor)
@@ -67,6 +78,8 @@ if new_normal == "current" and testing:
     dev = norm_val-norm_val_og
     print("Deviation from original norm:", [round(a,0) for a in dev])
     print("Deviation %:", [str(int(round(a*100,0)))+"%" for a in dev/norm_val])
+    print("Total Dev%: ", sum([abs(int(round(a*100,0))) for a in dev/norm_val]),"%")
+    print("Total Sensor Dev: ", sum(abs(np.round(b15 /norm_val,2)))-15)
 
 """Setup Model"""
 model = vanilla_model(15, feature_dim=40, feat_hidden=[200,200], activation_fn=nn.ReLU, output_hidden=[200,200],
